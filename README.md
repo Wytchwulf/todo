@@ -2,4 +2,4 @@
 
 ## Learning Rust
 
-A simple command line ToDo application is Rust
+A simple command line ToDo application in Rust
