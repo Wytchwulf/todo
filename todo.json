@@ -1,4 +1,10 @@
-{
-  "description": "do kung fu",
-  "done": false
-}
+[
+  {
+    "description": "kick ass",
+    "done": false
+  },
+  {
+    "description": "chew bubblegum",
+    "done": false
+  }
+]

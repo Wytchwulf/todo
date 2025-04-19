@@ -29,7 +29,7 @@ fn main() {
             };
 
             let mut tasks: Vec<Task> = match std::fs::read_to_string("todo.json") {
-                // If todo.json exists read file write file to a list
+                // Try to read todo.json and parse it into a list of tasks
                 Ok(content) => serde_json::from_str(&content).unwrap_or_else(|_| vec![]), // If parsing fails fallback to empty list
                 Err(_) => vec![], // If file doesnt exsist fallback to empty list
             };
@@ -42,7 +42,7 @@ fn main() {
             std::fs::write("todo.json", json) // Write to todo.json
                 .expect("Failed to write to file");
 
-            println!("Task saved to todo.jason");
+            println!("Task saved to todo.json");
         }
         None => println!("No task given"),
     }
