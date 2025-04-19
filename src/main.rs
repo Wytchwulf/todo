@@ -39,7 +39,7 @@ fn main() {
 
             std::fs::write("todo.json", json).expect("Failed to write to file"); // overwrites todo.json saves to disk else crash and print
 
-            println!("marked task {} as done", index);
+            println!("Marked task {} as done", index);
         } else {
             println!("No task at index {}", index);
         }
@@ -52,7 +52,6 @@ fn main() {
         Some(task_desc) => {
             // If not None the following block is run
             let task = Task {
-                // Assign Task struct to task variable
                 description: task_desc, // Assigns the argument to the description
                 done: false,
             };
@@ -65,7 +64,7 @@ fn main() {
 
             tasks.push(task); // Add task to list
 
-            let json = serde_json::to_string_pretty(&tasks) // Turn the Task into JSON
+            let json = serde_json::to_string_pretty(&tasks) // Turn the entire task list into JSON
                 .expect("Failed to serialize task");
 
             std::fs::write("todo.json", json) // Write to todo.json
