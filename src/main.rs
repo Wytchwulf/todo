@@ -7,26 +7,30 @@ use std::path::PathBuf;
 #[command(name = "Todo")] // Name the app
 #[command(about = "Obligatory new language ToDo app", long_about = None)] // Give a description
 struct Cli {
-    // Custom container for related data
-    task: Option<String>, // Define the data type for a task
-    #[arg(long)] // use -- for arg
-    done: Option<usize>, // e.g. --done 1
+    // Task creation
+    task: Option<String>, // Positional argument: new task
     #[arg(long)]
-    delete: Option<usize>,
+    tags: Vec<String>, // Tags for new task
+
+    // Task modification
     #[arg(long)]
-    show_done: bool,
+    done: Option<usize>, // Mark task as done
     #[arg(long)]
-    show_todo: bool,
+    toggle: Option<usize>, // Toggle done status
     #[arg(long)]
-    edit: Option<usize>,
+    delete: Option<usize>, // Delete a task
     #[arg(long)]
-    message: Option<String>,
+    edit: Option<usize>, // Edit task text
     #[arg(long)]
-    toggle: Option<usize>,
+    message: Option<String>, // New message for edit
+
+    // Task filtering
     #[arg(long)]
-    tags: Vec<String>,
+    show_done: bool, // Only show completed
     #[arg(long)]
-    filter_tag: Option<String>,
+    show_todo: bool, // Only show incomplete
+    #[arg(long)]
+    filter_tag: Option<String>, // Filter by tag
 }
 
 #[derive(Serialize, Deserialize, Debug)] // Easily convert to and from JSON
