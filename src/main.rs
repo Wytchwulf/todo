@@ -1,6 +1,7 @@
 use clap::Parser; // Import Parser
 use colored::*;
 use serde::{Deserialize, Serialize}; // Import Serialize & Deserialize
+use std::path::PathBuf;
 
 #[derive(Parser, Debug)] // Automatically create CLI argument parsing from the struct
 #[command(name = "Todo")] // Name the app
@@ -43,7 +44,7 @@ fn update_task(index: Option<usize>, action: TaskAction) {
     if let Some(index) = index {
         // If there is an index value, bind it to the variable `index`
 
-        let mut tasks: Vec<Task> = match std::fs::read_to_string("todo.json") {
+        let mut tasks: Vec<Task> = match std::fs::read_to_string(&get_todo_file_path()) {
             // Assign to `tasks` the result of the match expression
 
             // Try to read todo.json as a String (raw JSON from disk)
@@ -105,6 +106,19 @@ fn update_task(index: Option<usize>, action: TaskAction) {
     }
 }
 
+fn get_todo_file_path() -> PathBuf {
+    let base = dirs::data_local_dir().unwrap_or_else(|| {
+        eprintln!("Could not find local data directory");
+        std::process::exit(1);
+    });
+
+    let todo_dir = base.join("todo-rs");
+
+    std::fs::create_dir_all(&todo_dir).expect("Failed to create todo data directory");
+
+    todo_dir.join("todo.json")
+}
+
 fn main() {
     let args = Cli::parse();
 
@@ -148,7 +162,7 @@ fn main() {
                 done: false,
             };
 
-            let mut tasks: Vec<Task> = match std::fs::read_to_string("todo.json") {
+            let mut tasks: Vec<Task> = match std::fs::read_to_string(&get_todo_file_path()) {
                 // Try to read todo.json and parse it into a list of tasks
                 Ok(content) => serde_json::from_str(&content).unwrap_or_else(|_| vec![]), // If parsing fails fallback to empty list
                 Err(_) => vec![], // If file doesnt exist fallback to empty list
@@ -159,13 +173,14 @@ fn main() {
             let json = serde_json::to_string_pretty(&tasks) // Turn the entire task list into JSON
                 .expect("Failed to serialize task");
 
-            std::fs::write("todo.json", json) // Write to todo.json
+            std::fs::write(get_todo_file_path(), json)
+                // Write to todo.json
                 .expect("Failed to write to file");
 
             println!("Task saved to todo.json");
         }
         None => {
-            let tasks: Vec<Task> = match std::fs::read_to_string("todo.json") {
+            let tasks: Vec<Task> = match std::fs::read_to_string(&get_todo_file_path()) {
                 // Try to read todo.json and parse it to a list of tasks
                 Ok(content) => serde_json::from_str(&content).unwrap_or_else(|_| vec![]), // If parsing fails fallback to empty list
                 Err(_) => {
