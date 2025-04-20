@@ -23,12 +23,15 @@ struct Cli {
     message: Option<String>,
     #[arg(long)]
     toggle: Option<usize>,
+    #[arg(long)]
+    tags: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)] // Easily convert to and from JSON
 struct Task {
     description: String, // Description of task
     done: bool,          // Complete or not
+    tags: Vec<String>,
 }
 
 enum TaskAction {
@@ -160,6 +163,7 @@ fn main() {
             let task = Task {
                 description: task_desc, // Assigns the argument to the description
                 done: false,
+                tags: args.tags.clone(),
             };
 
             let mut tasks: Vec<Task> = match std::fs::read_to_string(&get_todo_file_path()) {
@@ -218,7 +222,17 @@ fn main() {
                     } else {
                         "[ ]".red()
                     }; // If the task is complete mark with an X or else a blank box
-                    println!("{} {} {}", i, status, task.description); // Print to command line task index, completion status and description
+                    if task.tags.is_empty() {
+                        println!("{} {} {}", i, status, task.description);
+                    } else {
+                        println!(
+                            "{} {} {} {}",
+                            i,
+                            status,
+                            task.description,
+                            format!("[{}]", task.tags.join(", ")).cyan()
+                        );
+                    }
                 }
             }
         }
