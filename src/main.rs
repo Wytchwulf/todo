@@ -17,6 +17,10 @@ struct Cli {
     show_done: bool,
     #[arg(long)]
     show_todo: bool,
+    #[arg(long)]
+    edit: Option<usize>,
+    #[arg(long)]
+    message: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)] // Easily convert to and from JSON
@@ -30,6 +34,7 @@ enum TaskAction {
     // If a struct is "AND" enum is "OR"
     Done,
     Delete,
+    Edit(String),
 }
 
 fn update_task(index: Option<usize>, action: TaskAction) {
@@ -66,6 +71,14 @@ fn update_task(index: Option<usize>, action: TaskAction) {
 
                     println!("Deleted task {}: {}", index, removed.description);
                 }
+                TaskAction::Edit(new_desc) => {
+                    let old_desc = tasks[index].description.clone();
+                    tasks[index].description = new_desc;
+                    println!(
+                        "Edited task {}:\n- Before: {}\n- After: {}",
+                        index, old_desc, tasks[index].description
+                    );
+                }
             }
 
             let json = serde_json::to_string_pretty(&tasks).expect("Failed to serialize tasks");
@@ -91,6 +104,20 @@ fn main() {
     if args.delete.is_some() {
         update_task(args.delete, TaskAction::Delete);
         return;
+    }
+
+    if let Some(index) = args.edit {
+        // If --edit was provided with an index
+        if let Some(new_message) = args.message.clone() {
+            // and if --message is also provided
+            update_task(Some(index), TaskAction::Edit(new_message));
+            return;
+            // Update selected task with new message and exit
+        } else {
+            println!("No message provided for --edit");
+            return;
+            // else if --message missing advise user & exit
+        }
     }
 
     match args.task {
