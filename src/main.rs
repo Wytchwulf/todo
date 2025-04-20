@@ -25,6 +25,8 @@ struct Cli {
     toggle: Option<usize>,
     #[arg(long)]
     tags: Vec<String>,
+    #[arg(long)]
+    filter_tag: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)] // Easily convert to and from JSON
@@ -202,13 +204,21 @@ fn main() {
                 .iter()
                 .enumerate()
                 .filter(|(_, task)| {
-                    if args.show_done {
+                    let tag_match = if let Some(ref tag) = args.filter_tag {
+                        task.tags.iter().any(|t| t.eq_ignore_ascii_case(tag))
+                    } else {
+                        true
+                    };
+
+                    let status_match = if args.show_done {
                         task.done
                     } else if args.show_todo {
                         !task.done
                     } else {
                         true
-                    }
+                    };
+
+                    tag_match && status_match
                 })
                 .collect();
 
