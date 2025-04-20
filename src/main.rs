@@ -1,5 +1,3 @@
-use std::vec;
-
 use clap::Parser; // Import Parser
 use serde::{Deserialize, Serialize}; // Import Serialize & Deserialize 
 
@@ -21,6 +19,8 @@ struct Cli {
     edit: Option<usize>,
     #[arg(long)]
     message: Option<String>,
+    #[arg(long)]
+    toggle: Option<usize>,
 }
 
 #[derive(Serialize, Deserialize, Debug)] // Easily convert to and from JSON
@@ -35,6 +35,7 @@ enum TaskAction {
     Done,
     Delete,
     Edit(String),
+    Toggle,
 }
 
 fn update_task(index: Option<usize>, action: TaskAction) {
@@ -79,6 +80,13 @@ fn update_task(index: Option<usize>, action: TaskAction) {
                         index, old_desc, tasks[index].description
                     );
                 }
+                TaskAction::Toggle => {
+                    tasks[index].done = !tasks[index].done;
+                    // Invert status of selected task 
+                    let status = if tasks[index].done { "Complete"} else { "Incomplete" };
+                    println!("Toggled task {} → {}", index, status);
+
+                }
             }
 
             let json = serde_json::to_string_pretty(&tasks).expect("Failed to serialize tasks");
@@ -120,6 +128,13 @@ fn main() {
         }
     }
 
+    if let Some(index) = args.toggle {
+        //if --toggle was provided with an index
+        update_task(Some(index), TaskAction::Toggle);
+        return;
+        // Update task with result of Toggle and exit
+    }
+
     match args.task {
         // Pattern matching
         Some(task_desc) => {
@@ -132,7 +147,7 @@ fn main() {
             let mut tasks: Vec<Task> = match std::fs::read_to_string("todo.json") {
                 // Try to read todo.json and parse it into a list of tasks
                 Ok(content) => serde_json::from_str(&content).unwrap_or_else(|_| vec![]), // If parsing fails fallback to empty list
-                Err(_) => vec![], // If file doesnt exsist fallback to empty list
+                Err(_) => vec![], // If file doesnt exist fallback to empty list
             };
 
             tasks.push(task); // Add task to list
