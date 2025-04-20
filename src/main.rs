@@ -1,5 +1,6 @@
 use clap::Parser; // Import Parser
-use serde::{Deserialize, Serialize}; // Import Serialize & Deserialize 
+use colored::*;
+use serde::{Deserialize, Serialize}; // Import Serialize & Deserialize
 
 #[derive(Parser, Debug)] // Automatically create CLI argument parsing from the struct
 #[command(name = "Todo")] // Name the app
@@ -82,10 +83,13 @@ fn update_task(index: Option<usize>, action: TaskAction) {
                 }
                 TaskAction::Toggle => {
                     tasks[index].done = !tasks[index].done;
-                    // Invert status of selected task 
-                    let status = if tasks[index].done { "Complete"} else { "Incomplete" };
+                    // Invert status of selected task
+                    let status = if tasks[index].done {
+                        "Complete"
+                    } else {
+                        "Incomplete"
+                    };
                     println!("Toggled task {} → {}", index, status);
-
                 }
             }
 
@@ -194,7 +198,11 @@ fn main() {
             } else {
                 for (i, task) in filtered {
                     // For each task in list...
-                    let status = if task.done { "[x]" } else { "[ ]" }; // If the task is complete mark with an X or else a blank box
+                    let status = if task.done {
+                        "[x]".green()
+                    } else {
+                        "[ ]".red()
+                    }; // If the task is complete mark with an X or else a blank box
                     println!("{} {} {}", i, status, task.description); // Print to command line task index, completion status and description
                 }
             }
