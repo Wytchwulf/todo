@@ -49,6 +49,10 @@ enum TaskAction {
     Toggle,
 }
 
+fn is_action_requested(args: &Cli) -> bool {
+    args.done.is_some() || args.delete.is_some() || args.edit.is_some() || args.toggle.is_some()
+}
+
 fn update_task(index: Option<usize>, action: TaskAction) {
     if let Some(index) = index {
         // If there is an index value, bind it to the variable `index`
@@ -106,7 +110,7 @@ fn update_task(index: Option<usize>, action: TaskAction) {
             let json = serde_json::to_string_pretty(&tasks).expect("Failed to serialize tasks");
             // Convert list to pretty json and add to variable json else print error message
 
-            std::fs::write("todo.json", json).expect("Failed to write to file");
+            std::fs::write(get_todo_file_path(), json).expect("Failed to write to file");
             // Write the contents of variable json to todo.json file else print error message
         } else {
             println!("No task at index {}", index);
@@ -163,29 +167,29 @@ fn main() {
     }
 
     match args.task {
-        // Pattern matching
-        Some(task_desc) => {
-            // If not None the following block is run
+        Some(ref task_desc) => {
+            if is_action_requested(&args) {
+                println!(
+                    "Error: Cannot add a task while also using --done, --delete, --edit, or --toggle."
+                );
+                return;
+            }
+
             let task = Task {
-                description: task_desc, // Assigns the argument to the description
+                description: task_desc.to_string(),
                 done: false,
                 tags: args.tags.clone(),
             };
 
             let mut tasks: Vec<Task> = match std::fs::read_to_string(&get_todo_file_path()) {
-                // Try to read todo.json and parse it into a list of tasks
-                Ok(content) => serde_json::from_str(&content).unwrap_or_else(|_| vec![]), // If parsing fails fallback to empty list
-                Err(_) => vec![], // If file doesnt exist fallback to empty list
+                Ok(content) => serde_json::from_str(&content).unwrap_or_else(|_| vec![]),
+                Err(_) => vec![],
             };
 
-            tasks.push(task); // Add task to list
+            tasks.push(task);
 
-            let json = serde_json::to_string_pretty(&tasks) // Turn the entire task list into JSON
-                .expect("Failed to serialize task");
-
-            std::fs::write(get_todo_file_path(), json)
-                // Write to todo.json
-                .expect("Failed to write to file");
+            let json = serde_json::to_string_pretty(&tasks).expect("Failed to serialize task");
+            std::fs::write(get_todo_file_path(), json).expect("Failed to write to file");
 
             println!("Task saved to todo.json");
         }
