@@ -7,8 +7,10 @@ use serde::{Deserialize, Serialize}; // Import Serialize & Deserialize
 struct Cli {
     // Custom container for related data
     task: Option<String>, // Define the data type for a task
+    #[arg(long)] // use -- for arg
+    done: Option<usize>, // e.g. --done 1
     #[arg(long)]
-    done: Option<usize>,
+    delete: Option<usize>,
 }
 
 #[derive(Serialize, Deserialize, Debug)] // Easily convert to and from JSON
@@ -17,33 +19,54 @@ struct Task {
     done: bool,          // Complete or not
 }
 
-fn main() {
-    let args = Cli::parse(); // Parses command line input
+enum TaskAction {
+    Done,
+    Delete,
+}
 
-    if let Some(index) = args.done {
-        // If a number is provided with arg --done bind it to index and run the following block
+fn update_task(index: Option<usize>, action: TaskAction) {
+    if let Some(index) = index {
         let mut tasks: Vec<Task> = match std::fs::read_to_string("todo.json") {
-            // read todo.json and convert to string
-            Ok(content) => serde_json::from_str(&content).unwrap_or_else(|_| vec![]), // content holds raw json string, serde_json will parse to list else fallback to empty list
+            Ok(content) => serde_json::from_str(&content).unwrap_or_else(|_| vec![]),
             Err(_) => {
                 println!("No tasks found");
-                return; // If file doesnt exist print to command line and exit 
+                return;
             }
         };
 
         if index < tasks.len() {
-            // if the index number is less than the total number of tasks
-            tasks[index].done = true; // mark the associated task as done
+            match action {
+                TaskAction::Done => {
+                    tasks[index].done = true;
 
-            let json = serde_json::to_string_pretty(&tasks).expect("Failed to serialize tasks"); // Convert back to JSON else crash and print
+                    println!("Marked task {} as done", index);
+                }
+                TaskAction::Delete => {
+                    let removed = tasks.remove(index);
 
-            std::fs::write("todo.json", json).expect("Failed to write to file"); // overwrites todo.json saves to disk else crash and print
+                    println!("Deleted task {}: {}", index, removed.description);
+                }
+            }
 
-            println!("Marked task {} as done", index);
+            let json = serde_json::to_string_pretty(&tasks).expect("Failed to serialize tasks");
+
+            std::fs::write("todo.json", json).expect("Failed to write to file");
         } else {
             println!("No task at index {}", index);
         }
+    }
+}
 
+fn main() {
+    let args = Cli::parse();
+
+    if args.done.is_some() {
+        update_task(args.done, TaskAction::Done);
+        return;
+    }
+
+    if args.delete.is_some() {
+        update_task(args.delete, TaskAction::Delete);
         return;
     }
 

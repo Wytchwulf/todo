@@ -1,9 +1,5 @@
 [
   {
-    "description": "kick ass",
-    "done": false
-  },
-  {
     "description": "chew bubblegum",
     "done": true
   }
