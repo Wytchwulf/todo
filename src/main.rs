@@ -1,3 +1,5 @@
+use std::vec;
+
 use clap::Parser; // Import Parser
 use serde::{Deserialize, Serialize}; // Import Serialize & Deserialize 
 
@@ -11,6 +13,10 @@ struct Cli {
     done: Option<usize>, // e.g. --done 1
     #[arg(long)]
     delete: Option<usize>,
+    #[arg(long)]
+    show_done: bool,
+    #[arg(long)]
+    show_todo: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug)] // Easily convert to and from JSON
@@ -20,39 +26,56 @@ struct Task {
 }
 
 enum TaskAction {
+    // A data type that can be one of many variants.
+    // If a struct is "AND" enum is "OR"
     Done,
     Delete,
 }
 
 fn update_task(index: Option<usize>, action: TaskAction) {
     if let Some(index) = index {
+        // If there is an index value, bind it to the variable `index`
+
         let mut tasks: Vec<Task> = match std::fs::read_to_string("todo.json") {
+            // Assign to `tasks` the result of the match expression
+
+            // Try to read todo.json as a String (raw JSON from disk)
             Ok(content) => serde_json::from_str(&content).unwrap_or_else(|_| vec![]),
+            // If file read succeeds, attempt to parse its contents from JSON
+            // If parsing fails, fall back to an empty list
             Err(_) => {
                 println!("No tasks found");
                 return;
+                // If the file doesn't exist or can't be read, print a message and exit
             }
         };
 
         if index < tasks.len() {
+            // If index within range of task list
             match action {
+                // Perform the specified action
                 TaskAction::Done => {
                     tasks[index].done = true;
+                    // Mark the task at the given index as complete
 
                     println!("Marked task {} as done", index);
                 }
                 TaskAction::Delete => {
                     let removed = tasks.remove(index);
+                    // Remove task at given index
 
                     println!("Deleted task {}: {}", index, removed.description);
                 }
             }
 
             let json = serde_json::to_string_pretty(&tasks).expect("Failed to serialize tasks");
+            // Convert list to pretty json and add to variable json else print error message
 
             std::fs::write("todo.json", json).expect("Failed to write to file");
+            // Write the contents of variable json to todo.json file else print error message
         } else {
             println!("No task at index {}", index);
+            // If index out of bounds inform user
         }
     }
 }
@@ -107,8 +130,27 @@ fn main() {
 
             if tasks.is_empty() {
                 println!("No tasks to show");
+                return;
+            }
+
+            let filtered: Vec<(usize, &Task)> = tasks
+                .iter()
+                .enumerate()
+                .filter(|(_, task)| {
+                    if args.show_done {
+                        task.done
+                    } else if args.show_todo {
+                        !task.done
+                    } else {
+                        true
+                    }
+                })
+                .collect();
+
+            if filtered.is_empty() {
+                println!("No matching tasks found");
             } else {
-                for (i, task) in tasks.iter().enumerate() {
+                for (i, task) in filtered {
                     // For each task in list...
                     let status = if task.done { "[x]" } else { "[ ]" }; // If the task is complete mark with an X or else a blank box
                     println!("{} {} {}", i, status, task.description); // Print to command line task index, completion status and description
